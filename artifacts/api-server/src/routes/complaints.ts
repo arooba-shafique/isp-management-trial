@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, complaintsTable, usersTable } from "@workspace/db";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
+import { notifyAdmins, notifyUser } from "../lib/notify";
 
 const router: IRouter = Router();
 
@@ -32,6 +33,10 @@ router.post("/complaints", requireAuth, async (req, res): Promise<void> => {
   const [complaint] = await db.insert(complaintsTable).values({
     customerId: req.user!.userId, subject, description, status: "open"
   }).returning();
+
+  const [complainant] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, req.user!.userId));
+  notifyAdmins("new_complaint", "New Complaint", `${complainant?.name ?? "A customer"} submitted a complaint: ${subject}`, complaint.id);
+
   res.status(201).json(formatComplaint(complaint));
 });
 
@@ -47,6 +52,7 @@ router.patch("/complaints/:id", requireAdmin, async (req, res): Promise<void> =>
   if (!complaint) { res.status(404).json({ error: "Complaint not found" }); return; }
 
   const [cust] = await db.select({ name: usersTable.name, phone: usersTable.phone }).from(usersTable).where(eq(usersTable.id, complaint.customerId));
+  notifyUser(complaint.customerId, "complaint_updated", "Complaint Updated", `Your complaint "${complaint.subject}" status: ${complaint.status}${adminNote ? `. Note: ${adminNote}` : ""}`, complaint.id);
   res.json(formatComplaint({ ...complaint, customerName: cust?.name ?? null, customerPhone: cust?.phone ?? null }));
 });
 

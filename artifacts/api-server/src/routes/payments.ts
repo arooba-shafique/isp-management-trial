@@ -2,6 +2,7 @@ import { Router, type IRouter } from "express";
 import { eq, and } from "drizzle-orm";
 import { db, paymentsTable, subscriptionsTable, usersTable, packagesTable } from "@workspace/db";
 import { requireAuth, requireAdmin } from "../middlewares/auth";
+import { notifyAdmins, notifyUser } from "../lib/notify";
 
 const router: IRouter = Router();
 
@@ -52,6 +53,9 @@ router.post("/payments", requireAuth, async (req, res): Promise<void> => {
     proofImageUrl: proofImageUrl ?? null, status: "pending", adminNote: note ?? null
   }).returning();
 
+  const [cust] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, customerId));
+  notifyAdmins("new_payment", "New Payment Submitted", `${cust?.name ?? "A customer"} submitted a payment of Rs. ${amount}`, payment.id);
+
   res.status(201).json(formatPayment(payment));
 });
 
@@ -68,7 +72,15 @@ router.post("/payments/:id/verify", requireAdmin, async (req, res): Promise<void
   const [payment] = await db.update(paymentsTable).set(updates).where(eq(paymentsTable.id, id)).returning();
   if (!payment) { res.status(404).json({ error: "Payment not found" }); return; }
 
+  const [payer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, payment.customerId));
+  const [paySub] = await db.select({ packageId: subscriptionsTable.packageId }).from(subscriptionsTable).where(eq(subscriptionsTable.id, payment.subscriptionId));
+  let pkgName = "";
+  if (paySub) {
+    const [pkg] = await db.select({ name: packagesTable.name }).from(packagesTable).where(eq(packagesTable.id, paySub.packageId));
+    pkgName = pkg?.name ?? "";
+  }
   if (action === "verify") {
+    notifyUser(payment.customerId, "payment_verified", "Payment Verified", `Your Rs. ${Number(payment.amount)} payment for ${pkgName} has been verified.`, payment.id);
     const [sub] = await db.select().from(subscriptionsTable).where(eq(subscriptionsTable.id, payment.subscriptionId));
     if (sub) {
       const [pkg] = await db.select().from(packagesTable).where(eq(packagesTable.id, sub.packageId));
@@ -84,6 +96,8 @@ router.post("/payments/:id/verify", requireAdmin, async (req, res): Promise<void
         }).where(eq(subscriptionsTable.id, sub.id));
       }
     }
+  } else {
+    notifyUser(payment.customerId, "payment_rejected", "Payment Rejected", `Your Rs. ${Number(payment.amount)} payment for ${pkgName} was rejected.${adminNote ? ` Note: ${adminNote}` : ""}`, payment.id);
   }
 
   res.json(formatPayment(payment));

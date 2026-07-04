@@ -3,6 +3,7 @@ import { eq, ilike, and, or } from "drizzle-orm";
 import { db, usersTable, packagesTable, subscriptionsTable, paymentsTable } from "@workspace/db";
 import { requireAdmin, requireAuth } from "../middlewares/auth";
 import { hashPassword } from "../lib/auth";
+import { notifyAdmins } from "../lib/notify";
 
 const router: IRouter = Router();
 
@@ -120,6 +121,8 @@ router.post("/customers", requireAdmin, async (req, res): Promise<void> => {
       startDate: new Date().toISOString().split("T")[0], endDate: dueDate
     });
   }
+
+  notifyAdmins("new_customer", "New Customer Added", `${name} (${phone}) was added as a customer`, user.id);
 
   const [activeSub] = await db.select().from(subscriptionsTable).where(and(eq(subscriptionsTable.customerId, user.id), eq(subscriptionsTable.status, "active"))).limit(1);
   let activeSubWithPackage = null;

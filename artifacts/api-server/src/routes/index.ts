@@ -9,6 +9,7 @@ import complaintsRouter from "./complaints";
 import announcementsRouter from "./announcements";
 import dashboardRouter from "./dashboard";
 import zonesRouter from "./zones";
+import notificationsRouter from "./notifications";
 
 const router: IRouter = Router();
 
@@ -22,5 +23,6 @@ router.use(complaintsRouter);
 router.use(announcementsRouter);
 router.use(dashboardRouter);
 router.use(zonesRouter);
+router.use(notificationsRouter);
 
 export default router;

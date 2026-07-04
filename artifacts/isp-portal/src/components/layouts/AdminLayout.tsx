@@ -6,6 +6,7 @@ import {
   Megaphone, LogOut, Wifi, MapPin, Menu, X, Settings
 } from "lucide-react";
 import { useState } from "react";
+import { NotificationBell } from "@/components/NotificationBell";
 
 const navItems = [
   { href: "/admin/dashboard", label: "Dashboard", icon: LayoutDashboard },
@@ -100,14 +101,17 @@ export function AdminLayout({ children }: { children: React.ReactNode }) {
       )}
 
       <div className="flex-1 flex flex-col min-w-0 overflow-hidden">
-        {/* Mobile header */}
-        <div className="md:hidden flex items-center gap-3 px-4 py-3 border-b bg-white">
-          <button onClick={() => setMobileOpen(true)} className="text-foreground">
+        {/* Top bar */}
+        <div className="flex items-center gap-3 px-4 py-3 border-b bg-white">
+          <button onClick={() => setMobileOpen(true)} className="md:hidden text-foreground">
             <Menu size={20} />
           </button>
-          <div className="flex items-center gap-2">
-            <Wifi size={16} className="text-primary" />
-            <span className="text-sm font-bold">NetLink ISP</span>
+          <div className="flex items-center gap-2 flex-1">
+            <Wifi size={16} className="md:hidden text-primary" />
+            <span className="md:hidden text-sm font-bold">NetLink ISP</span>
+          </div>
+          <div className="ml-auto">
+            <NotificationBell />
           </div>
         </div>
         <main className="flex-1 overflow-y-auto p-4 md:p-6">
