@@ -1,10 +1,10 @@
 import { logger } from "./logger";
 
 export async function sendPasswordResetEmail(to: string, resetToken: string): Promise<boolean> {
-  const apiKey = process.env.RESEND_API_KEY || process.env.SMTP_PASS;
+  const apiKey = process.env.RESEND_API_KEY;
 
   if (!apiKey) {
-    logger.warn("RESEND_API_KEY or SMTP_PASS not configured — password reset email not sent");
+    logger.warn("RESEND_API_KEY not configured — password reset email not sent");
     return false;
   }
 

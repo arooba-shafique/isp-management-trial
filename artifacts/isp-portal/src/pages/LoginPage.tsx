@@ -7,7 +7,7 @@ import { Wifi, Phone, User, MapPin, Lock, Mail, KeyRound } from "lucide-react";
 const ADMIN_PHONES = ["03496641464", "03286687112"];
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
 
-type Step = "phone" | "password" | "register" | "claim" | "forgot" | "forgot-sent";
+type Step = "phone" | "password" | "register" | "claim" | "forgot" | "forgot-sent" | "reset";
 
 export default function LoginPage() {
   const { login } = useAuth();
@@ -22,6 +22,9 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [needsClaim, setNeedsClaim] = useState(false);
   const [forgotEmail, setForgotEmail] = useState("");
+  const [resetToken, setResetToken] = useState("");
+  const [newPassword, setNewPassword] = useState("");
+  const [showResetToken, setShowResetToken] = useState("");
 
   async function handleCheckPhone(e: React.FormEvent) {
     e.preventDefault();
@@ -121,7 +124,7 @@ export default function LoginPage() {
 
   async function handleForgotPassword(e: React.FormEvent) {
     e.preventDefault();
-    setError("");
+    setError(""); setShowResetToken("");
     if (!forgotEmail.trim()) { setError("Please enter your email"); return; }
     setIsLoading(true);
     try {
@@ -132,7 +135,35 @@ export default function LoginPage() {
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to send reset email"); return; }
-      setStep("forgot-sent");
+      if (data.fallback) {
+        setShowResetToken(data.resetToken);
+        setStep("reset");
+      } else {
+        setStep("forgot-sent");
+      }
+    } catch {
+      setError("Network error");
+    } finally {
+      setIsLoading(false);
+    }
+  }
+
+  async function handleResetPassword(e: React.FormEvent) {
+    e.preventDefault();
+    setError("");
+    if (!resetToken || !newPassword) { setError("Reset token and new password required"); return; }
+    if (newPassword.length < 6) { setError("Password must be at least 6 characters"); return; }
+    setIsLoading(true);
+    try {
+      const res = await fetch(`${API_BASE}/api/auth/reset-password`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ resetToken, newPassword }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setError(data.error ?? "Failed to reset password"); return; }
+      login(data.token);
+      navigate(data.user.role === "admin" ? "/admin/dashboard" : "/dashboard");
     } catch {
       setError("Network error");
     } finally {
@@ -314,6 +345,44 @@ export default function LoginPage() {
                 Back to sign in
               </button>
             </div>
+          )}
+
+          {step === "reset" && (
+            <form onSubmit={handleResetPassword} className="space-y-4">
+              <div>
+                <h2 className="text-lg font-semibold mb-1">Reset Password</h2>
+                <p className="text-sm text-muted-foreground">Enter the reset token and your new password</p>
+              </div>
+              {showResetToken && (
+                <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 text-sm">
+                  <p className="font-medium text-amber-800 mb-1">Your Reset Token (copy this):</p>
+                  <code className="block bg-white border rounded px-2 py-1 text-xs break-all select-all">{showResetToken}</code>
+                </div>
+              )}
+              <div>
+                <label className="block text-sm font-medium mb-1.5">Reset Token</label>
+                <div className="relative">
+                  <KeyRound size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input type="text" value={resetToken} onChange={e => setResetToken(e.target.value)}
+                    placeholder="Paste reset token" className="w-full pl-9 pr-3 py-2.5 border rounded-lg text-sm font-mono focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" disabled={isLoading} />
+                </div>
+              </div>
+              <div>
+                <label className="block text-sm font-medium mb-1.5">New Password</label>
+                <div className="relative">
+                  <Lock size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-muted-foreground" />
+                  <input type="password" value={newPassword} onChange={e => setNewPassword(e.target.value)}
+                    placeholder="Enter new password" className="w-full pl-9 pr-3 py-2.5 border rounded-lg text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary" disabled={isLoading} />
+                </div>
+              </div>
+              {error && <p className="text-sm text-destructive">{error}</p>}
+              <button type="submit" disabled={isLoading} className="w-full bg-primary text-primary-foreground py-2.5 rounded-lg text-sm font-medium hover:bg-primary/90 transition-colors disabled:opacity-50">
+                {isLoading ? "Resetting..." : "Reset Password & Sign In"}
+              </button>
+              <button type="button" onClick={() => { setStep("forgot"); setError(""); setShowResetToken(""); }} className="w-full text-sm text-muted-foreground hover:text-foreground transition-colors">
+                Back
+              </button>
+            </form>
           )}
         </div>
       </div>
