@@ -2,6 +2,7 @@ import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
 import { useListPublicPackages, getListPublicPackagesQueryKey } from "@workspace/api-client-react";
 import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
 import {
   Wifi,
   Zap,
