@@ -1,7 +1,7 @@
 import { useQueryClient } from "@tanstack/react-query";
-import { useListCustomers, useListPackages, getListCustomersQueryKey, getListPackagesQueryKey } from "@workspace/api-client-react";
+import { useListCustomers, useListPackages, getListCustomersQueryKey, getListPackagesQueryKey, customFetch } from "@workspace/api-client-react";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Search, Plus, Upload, Filter } from "lucide-react";
+import { Search, Plus, Upload, Trash2 } from "lucide-react";
 import { useState } from "react";
 import { Link } from "wouter";
 
@@ -17,12 +17,24 @@ export default function AdminCustomers() {
   const [zone, setZone] = useState("");
   const [status, setStatus] = useState("");
 
+  const queryClient = useQueryClient();
+
   const { data: customers = [], isLoading } = useListCustomers(
     { search: search || undefined, zone: zone || undefined, status: status || undefined },
     { query: { queryKey: getListCustomersQueryKey({ search, zone, status }) } }
   );
 
   const zones = [...new Set((customers as Customer[]).map(c => c.zone).filter(Boolean))];
+
+  async function handleDelete(id: number, name: string) {
+    if (!window.confirm(`Delete customer "${name}"? This will also remove their subscriptions, payments, and complaints.`)) return;
+    try {
+      await customFetch(`/api/customers/${id}`, { method: "DELETE" });
+      queryClient.invalidateQueries({ queryKey: getListCustomersQueryKey({}) });
+    } catch {
+      alert("Failed to delete customer");
+    }
+  }
 
   return (
     <div className="space-y-5">
@@ -98,9 +110,14 @@ export default function AdminCustomers() {
                       {c.subscriptionEndDate ? new Date(c.subscriptionEndDate).toLocaleDateString() : "—"}
                     </td>
                     <td className="px-4 py-3">
-                      <Link href={`/admin/customers/${c.id}`}>
-                        <button className="text-xs text-primary hover:underline">View</button>
-                      </Link>
+                      <div className="flex items-center gap-2">
+                        <Link href={`/admin/customers/${c.id}`}>
+                          <button className="text-xs text-primary hover:underline">View</button>
+                        </Link>
+                        <button onClick={() => handleDelete(c.id, c.name)} className="text-xs text-red-500 hover:underline">
+                          <Trash2 size={12} />
+                        </button>
+                      </div>
                     </td>
                   </tr>
                 ))}
