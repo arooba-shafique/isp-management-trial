@@ -1,6 +1,6 @@
 import { Router, type IRouter } from "express";
 import { eq, ilike, and, or } from "drizzle-orm";
-import { db, usersTable, packagesTable, subscriptionsTable, paymentsTable } from "@workspace/db";
+import { db, usersTable, packagesTable, subscriptionsTable, paymentsTable, complaintsTable, notificationsTable } from "@workspace/db";
 import { requireAdmin, requireAuth } from "../middlewares/auth";
 import { hashPassword } from "../lib/auth";
 import { notifyAdmins } from "../lib/notify";
@@ -151,6 +151,18 @@ router.patch("/customers/:id", requireAdmin, async (req, res): Promise<void> => 
   const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
   if (!updated) { res.status(404).json({ error: "Customer not found" }); return; }
   res.json({ id: updated.id, phone: updated.phone, name: updated.name, role: updated.role, status: updated.status, address: updated.address, zone: updated.zone, createdAt: updated.createdAt.toISOString() });
+});
+
+router.delete("/customers/:id", requireAdmin, async (req, res): Promise<void> => {
+  const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
+  const id = parseInt(raw, 10);
+  await db.delete(notificationsTable).where(eq(notificationsTable.userId, id));
+  await db.delete(complaintsTable).where(eq(complaintsTable.customerId, id));
+  await db.delete(paymentsTable).where(eq(paymentsTable.customerId, id));
+  await db.delete(subscriptionsTable).where(eq(subscriptionsTable.customerId, id));
+  const [deleted] = await db.delete(usersTable).where(eq(usersTable.id, id)).returning();
+  if (!deleted) { res.status(404).json({ error: "Customer not found" }); return; }
+  res.json({ message: "Customer deleted", id: deleted.id, phone: deleted.phone });
 });
 
 router.post("/customers/:id/suspend", requireAdmin, async (req, res): Promise<void> => {
