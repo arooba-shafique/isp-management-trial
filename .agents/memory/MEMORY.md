@@ -1,0 +1,2 @@
+- [ISP Portal DB lib rebuild](isp-portal-lib-rebuild.md) — after DB schema changes, run `pnpm run typecheck:libs` before API server typecheck to avoid phantom "no exported member" errors
+- [ISP Portal hook signatures](isp-portal-hook-signatures.md) — generated hooks with params (listSubscriptions, listPayments, listComplaints) take params as first arg, `{query:...}` as second

@@ -1,0 +1,1303 @@
+openapi: 3.1.0
+info:
+  title: Api
+  version: 0.1.0
+  description: ISP Management Portal API
+servers:
+  - url: /api
+    description: Base API path
+tags:
+  - name: health
+  - name: auth
+  - name: packages
+  - name: customers
+  - name: subscriptions
+  - name: payments
+  - name: complaints
+  - name: announcements
+  - name: dashboard
+  - name: zones
+
+paths:
+  /healthz:
+    get:
+      operationId: healthCheck
+      tags: [health]
+      summary: Health check
+      responses:
+        "200":
+          description: Healthy
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/HealthStatus"
+
+  # ── AUTH ────────────────────────────────────────────────────────────────
+  /auth/send-otp:
+    post:
+      operationId: sendOtp
+      tags: [auth]
+      summary: Send OTP to phone number
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SendOtpInput"
+      responses:
+        "200":
+          description: OTP sent
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/MessageResponse"
+
+  /auth/register:
+    post:
+      operationId: register
+      tags: [auth]
+      summary: Customer self-registration (after OTP verification)
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/RegisterInput"
+      responses:
+        "201":
+          description: Registered and logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/login:
+    post:
+      operationId: login
+      tags: [auth]
+      summary: Login with phone + OTP
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/LoginInput"
+      responses:
+        "200":
+          description: Logged in
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/claim-account:
+    post:
+      operationId: claimAccount
+      tags: [auth]
+      summary: Imported customer claims their account with OTP + password
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ClaimAccountInput"
+      responses:
+        "200":
+          description: Account claimed
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/AuthResponse"
+
+  /auth/me:
+    get:
+      operationId: getMe
+      tags: [auth]
+      summary: Get current authenticated user
+      responses:
+        "200":
+          description: Current user
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/User"
+
+  # ── PACKAGES ─────────────────────────────────────────────────────────────
+  /packages:
+    get:
+      operationId: listPackages
+      tags: [packages]
+      summary: List all internet packages
+      responses:
+        "200":
+          description: List of packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Package"
+    post:
+      operationId: createPackage
+      tags: [packages]
+      summary: Admin creates a new package
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageInput"
+      responses:
+        "201":
+          description: Created package
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Package"
+
+  /packages/public:
+    get:
+      operationId: listPublicPackages
+      tags: [packages]
+      summary: List all active packages (public)
+      responses:
+        "200":
+          description: List of active packages
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Package"
+
+  /packages/{id}:
+    patch:
+      operationId: updatePackage
+      tags: [packages]
+      summary: Admin updates a package
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PackageUpdate"
+      responses:
+        "200":
+          description: Updated package
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Package"
+    delete:
+      operationId: deletePackage
+      tags: [packages]
+      summary: Admin deletes a package
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── CUSTOMERS ─────────────────────────────────────────────────────────────
+  /customers:
+    get:
+      operationId: listCustomers
+      tags: [customers]
+      summary: Admin lists customers with optional filters
+      parameters:
+        - name: zone
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: packageId
+          in: query
+          schema:
+            type: integer
+        - name: paymentStatus
+          in: query
+          schema:
+            type: string
+        - name: search
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/CustomerSummary"
+    post:
+      operationId: createCustomer
+      tags: [customers]
+      summary: Admin manually adds a customer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerInput"
+      responses:
+        "201":
+          description: Created customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/import:
+    post:
+      operationId: importCustomers
+      tags: [customers]
+      summary: Admin bulk-imports customers from CSV/JSON
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ImportCustomersInput"
+      responses:
+        "200":
+          description: Import result
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/ImportResult"
+
+  /customers/{id}:
+    get:
+      operationId: getCustomer
+      tags: [customers]
+      summary: Get customer details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Customer details
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+    patch:
+      operationId: updateCustomer
+      tags: [customers]
+      summary: Admin updates customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/CustomerUpdate"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  /customers/{id}/suspend:
+    post:
+      operationId: suspendCustomer
+      tags: [customers]
+      summary: Admin suspends or reactivates a customer
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SuspendInput"
+      responses:
+        "200":
+          description: Updated customer
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Customer"
+
+  # ── SUBSCRIPTIONS ─────────────────────────────────────────────────────────
+  /subscriptions:
+    get:
+      operationId: listSubscriptions
+      tags: [subscriptions]
+      summary: List subscriptions (admin sees all, customer sees own)
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+      responses:
+        "200":
+          description: List of subscriptions
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Subscription"
+    post:
+      operationId: createSubscription
+      tags: [subscriptions]
+      summary: Customer subscribes to a package
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionInput"
+      responses:
+        "201":
+          description: Created subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{id}:
+    get:
+      operationId: getSubscription
+      tags: [subscriptions]
+      summary: Get subscription details
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: Subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+    patch:
+      operationId: updateSubscription
+      tags: [subscriptions]
+      summary: Admin updates subscription status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SubscriptionUpdate"
+      responses:
+        "200":
+          description: Updated subscription
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{id}/renew:
+    post:
+      operationId: renewSubscription
+      tags: [subscriptions]
+      summary: Customer requests renewal
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "201":
+          description: Renewal subscription created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  /subscriptions/{id}/switch:
+    post:
+      operationId: switchPackage
+      tags: [subscriptions]
+      summary: Customer requests package switch
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/SwitchPackageInput"
+      responses:
+        "201":
+          description: New subscription with new package
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Subscription"
+
+  # ── PAYMENTS ──────────────────────────────────────────────────────────────
+  /payments:
+    get:
+      operationId: listPayments
+      tags: [payments]
+      summary: List payments (admin sees all, customer sees own)
+      parameters:
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: subscriptionId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of payments
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Payment"
+    post:
+      operationId: submitPayment
+      tags: [payments]
+      summary: Customer submits payment proof
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/PaymentInput"
+      responses:
+        "201":
+          description: Payment submitted
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  /payments/{id}/verify:
+    post:
+      operationId: verifyPayment
+      tags: [payments]
+      summary: Admin verifies or rejects a payment
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/VerifyPaymentInput"
+      responses:
+        "200":
+          description: Payment updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Payment"
+
+  # ── COMPLAINTS ────────────────────────────────────────────────────────────
+  /complaints:
+    get:
+      operationId: listComplaints
+      tags: [complaints]
+      summary: List complaints
+      parameters:
+        - name: status
+          in: query
+          schema:
+            type: string
+        - name: customerId
+          in: query
+          schema:
+            type: integer
+      responses:
+        "200":
+          description: List of complaints
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Complaint"
+    post:
+      operationId: createComplaint
+      tags: [complaints]
+      summary: Customer submits a complaint
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplaintInput"
+      responses:
+        "201":
+          description: Complaint created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+
+  /complaints/{id}:
+    patch:
+      operationId: updateComplaint
+      tags: [complaints]
+      summary: Admin updates complaint status
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ComplaintUpdate"
+      responses:
+        "200":
+          description: Updated complaint
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Complaint"
+
+  # ── ANNOUNCEMENTS ─────────────────────────────────────────────────────────
+  /announcements:
+    get:
+      operationId: listAnnouncements
+      tags: [announcements]
+      summary: List announcements
+      responses:
+        "200":
+          description: List of announcements
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Announcement"
+    post:
+      operationId: createAnnouncement
+      tags: [announcements]
+      summary: Admin creates and sends a bulk announcement
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/AnnouncementInput"
+      responses:
+        "201":
+          description: Announcement created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Announcement"
+
+  # ── ZONES ────────────────────────────────────────────────────────────────
+  /zones:
+    get:
+      operationId: listZones
+      tags: [zones]
+      summary: List all zones (public)
+      responses:
+        "200":
+          description: List of zones
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/Zone"
+    post:
+      operationId: createZone
+      tags: [zones]
+      summary: Admin creates a zone
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ZoneInput"
+      responses:
+        "201":
+          description: Zone created
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Zone"
+
+  /zones/{id}:
+    patch:
+      operationId: updateZone
+      tags: [zones]
+      summary: Admin updates a zone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: "#/components/schemas/ZoneInput"
+      responses:
+        "200":
+          description: Zone updated
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/Zone"
+    delete:
+      operationId: deleteZone
+      tags: [zones]
+      summary: Admin deletes a zone
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: integer
+      responses:
+        "204":
+          description: Deleted
+
+  # ── DASHBOARD ────────────────────────────────────────────────────────────
+  /dashboard/stats:
+    get:
+      operationId: getDashboardStats
+      tags: [dashboard]
+      summary: Admin dashboard overview stats
+      responses:
+        "200":
+          description: Dashboard stats
+          content:
+            application/json:
+              schema:
+                $ref: "#/components/schemas/DashboardStats"
+
+  /dashboard/expiring-soon:
+    get:
+      operationId: getExpiringSoon
+      tags: [dashboard]
+      summary: Customers with subscriptions expiring in next 7 days
+      responses:
+        "200":
+          description: Expiring soon
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpiringCustomer"
+
+  /dashboard/overdue:
+    get:
+      operationId: getOverdueCustomers
+      tags: [dashboard]
+      summary: Overdue customers (past due, no verified payment)
+      responses:
+        "200":
+          description: Overdue customers
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/ExpiringCustomer"
+
+  /dashboard/package-distribution:
+    get:
+      operationId: getPackageDistribution
+      tags: [dashboard]
+      summary: Customer count per package
+      responses:
+        "200":
+          description: Package distribution
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: "#/components/schemas/PackageDistribution"
+
+components:
+  schemas:
+    HealthStatus:
+      type: object
+      required: [status]
+      properties:
+        status:
+          type: string
+
+    MessageResponse:
+      type: object
+      required: [message]
+      properties:
+        message:
+          type: string
+
+    AuthResponse:
+      type: object
+      required: [token, user]
+      properties:
+        token:
+          type: string
+        user:
+          $ref: "#/components/schemas/User"
+
+    User:
+      type: object
+      required: [id, phone, name, role, status, createdAt]
+      properties:
+        id:
+          type: integer
+        phone:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+          enum: [admin, customer]
+        status:
+          type: string
+          enum: [active, suspended, pending-claim]
+        address:
+          type: ["string", "null"]
+        zone:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    SendOtpInput:
+      type: object
+      required: [phone]
+      properties:
+        phone:
+          type: string
+
+    RegisterInput:
+      type: object
+      required: [phone, otp, name, password]
+      properties:
+        phone:
+          type: string
+        otp:
+          type: string
+        name:
+          type: string
+        password:
+          type: string
+        address:
+          type: string
+        zone:
+          type: string
+
+    LoginInput:
+      type: object
+      required: [phone, otp]
+      properties:
+        phone:
+          type: string
+        otp:
+          type: string
+
+    ClaimAccountInput:
+      type: object
+      required: [phone, otp, password]
+      properties:
+        phone:
+          type: string
+        otp:
+          type: string
+        password:
+          type: string
+
+    Package:
+      type: object
+      required: [id, name, speedMbps, price, validity, isActive, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        speedMbps:
+          type: integer
+        price:
+          type: number
+        validity:
+          type: string
+          enum: [monthly, quarterly, yearly]
+        isActive:
+          type: boolean
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    PackageInput:
+      type: object
+      required: [name, speedMbps, price, validity]
+      properties:
+        name:
+          type: string
+        speedMbps:
+          type: integer
+        price:
+          type: number
+        validity:
+          type: string
+          enum: [monthly, quarterly, yearly]
+        description:
+          type: string
+        isActive:
+          type: boolean
+
+    PackageUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        speedMbps:
+          type: integer
+        price:
+          type: number
+        validity:
+          type: string
+          enum: [monthly, quarterly, yearly]
+        description:
+          type: string
+        isActive:
+          type: boolean
+
+    Customer:
+      type: object
+      required: [id, phone, name, role, status, createdAt]
+      properties:
+        id:
+          type: integer
+        phone:
+          type: string
+        name:
+          type: string
+        role:
+          type: string
+        status:
+          type: string
+        address:
+          type: ["string", "null"]
+        zone:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        activeSubscription:
+          $ref: "#/components/schemas/Subscription"
+
+    CustomerSummary:
+      type: object
+      required: [id, phone, name, status, createdAt]
+      properties:
+        id:
+          type: integer
+        phone:
+          type: string
+        name:
+          type: string
+        status:
+          type: string
+        address:
+          type: ["string", "null"]
+        zone:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        currentPackageName:
+          type: ["string", "null"]
+        subscriptionStatus:
+          type: ["string", "null"]
+        subscriptionEndDate:
+          type: ["string", "null"]
+        hasPendingPayment:
+          type: boolean
+
+    CustomerInput:
+      type: object
+      required: [phone, name]
+      properties:
+        phone:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        zone:
+          type: string
+        packageId:
+          type: integer
+        dueDate:
+          type: string
+
+    CustomerUpdate:
+      type: object
+      properties:
+        name:
+          type: string
+        address:
+          type: string
+        zone:
+          type: string
+        phone:
+          type: string
+
+    SuspendInput:
+      type: object
+      required: [suspended]
+      properties:
+        suspended:
+          type: boolean
+
+    ImportCustomersInput:
+      type: object
+      required: [customers]
+      properties:
+        customers:
+          type: array
+          items:
+            $ref: "#/components/schemas/ImportCustomerRow"
+
+    ImportCustomerRow:
+      type: object
+      required: [phone, name]
+      properties:
+        phone:
+          type: string
+        name:
+          type: string
+        address:
+          type: string
+        zone:
+          type: string
+        packageName:
+          type: string
+        dueDate:
+          type: string
+
+    ImportResult:
+      type: object
+      required: [imported, skipped, errors]
+      properties:
+        imported:
+          type: integer
+        skipped:
+          type: integer
+        errors:
+          type: array
+          items:
+            type: string
+
+    Subscription:
+      type: object
+      required: [id, customerId, packageId, status, createdAt]
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        packageId:
+          type: integer
+        status:
+          type: string
+          enum: [pending-payment, active, suspended, expired]
+        startDate:
+          type: ["string", "null"]
+        endDate:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        package:
+          $ref: "#/components/schemas/Package"
+        customerName:
+          type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
+
+    SubscriptionInput:
+      type: object
+      required: [packageId]
+      properties:
+        packageId:
+          type: integer
+
+    SubscriptionUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [pending-payment, active, suspended, expired]
+        startDate:
+          type: string
+        endDate:
+          type: string
+
+    SwitchPackageInput:
+      type: object
+      required: [newPackageId]
+      properties:
+        newPackageId:
+          type: integer
+
+    Payment:
+      type: object
+      required: [id, subscriptionId, customerId, amount, status, createdAt]
+      properties:
+        id:
+          type: integer
+        subscriptionId:
+          type: integer
+        customerId:
+          type: integer
+        amount:
+          type: number
+        proofImageUrl:
+          type: ["string", "null"]
+        status:
+          type: string
+          enum: [pending, verified, rejected]
+        adminNote:
+          type: ["string", "null"]
+        verifiedAt:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        customerName:
+          type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
+        packageName:
+          type: ["string", "null"]
+
+    PaymentInput:
+      type: object
+      required: [subscriptionId, amount]
+      properties:
+        subscriptionId:
+          type: integer
+        amount:
+          type: number
+        proofImageUrl:
+          type: string
+        note:
+          type: string
+
+    VerifyPaymentInput:
+      type: object
+      required: [action]
+      properties:
+        action:
+          type: string
+          enum: [verify, reject]
+        adminNote:
+          type: string
+
+    Complaint:
+      type: object
+      required: [id, customerId, subject, description, status, createdAt]
+      properties:
+        id:
+          type: integer
+        customerId:
+          type: integer
+        subject:
+          type: string
+        description:
+          type: string
+        status:
+          type: string
+          enum: [open, in-progress, resolved]
+        adminNote:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+        updatedAt:
+          type: string
+        customerName:
+          type: ["string", "null"]
+        customerPhone:
+          type: ["string", "null"]
+
+    ComplaintInput:
+      type: object
+      required: [subject, description]
+      properties:
+        subject:
+          type: string
+        description:
+          type: string
+
+    ComplaintUpdate:
+      type: object
+      properties:
+        status:
+          type: string
+          enum: [open, in-progress, resolved]
+        adminNote:
+          type: string
+
+    Announcement:
+      type: object
+      required: [id, title, message, createdAt]
+      properties:
+        id:
+          type: integer
+        title:
+          type: string
+        message:
+          type: string
+        targetZone:
+          type: ["string", "null"]
+        recipientCount:
+          type: ["integer", "null"]
+        createdAt:
+          type: string
+
+    AnnouncementInput:
+      type: object
+      required: [title, message]
+      properties:
+        title:
+          type: string
+        message:
+          type: string
+        targetZone:
+          type: string
+
+    DashboardStats:
+      type: object
+      required: [totalActiveCustomers, monthlyRevenue, totalOutstandingDues, totalCustomers, pendingPayments, openComplaints]
+      properties:
+        totalActiveCustomers:
+          type: integer
+        totalCustomers:
+          type: integer
+        monthlyRevenue:
+          type: number
+        totalOutstandingDues:
+          type: number
+        pendingPayments:
+          type: integer
+        openComplaints:
+          type: integer
+
+    ExpiringCustomer:
+      type: object
+      required: [customerId, customerName, customerPhone, packageName, endDate]
+      properties:
+        customerId:
+          type: integer
+        customerName:
+          type: string
+        customerPhone:
+          type: string
+        zone:
+          type: ["string", "null"]
+        packageName:
+          type: string
+        endDate:
+          type: string
+        daysLeft:
+          type: ["integer", "null"]
+
+    Zone:
+      type: object
+      required: [id, name, createdAt]
+      properties:
+        id:
+          type: integer
+        name:
+          type: string
+        description:
+          type: ["string", "null"]
+        createdAt:
+          type: string
+
+    ZoneInput:
+      type: object
+      required: [name]
+      properties:
+        name:
+          type: string
+        description:
+          type: string
+
+    PackageDistribution:
+      type: object
+      required: [packageName, customerCount, speedMbps]
+      properties:
+        packageName:
+          type: string
+        customerCount:
+          type: integer
+        speedMbps:
+          type: integer

@@ -1,0 +1,64 @@
+Build a full-stack web application for an internet service provider (ISP) business operating in Sahiwal, Pakistan, managing 200+ customers. Use a React frontend with a Node.js/Express or Python/Django backend (your choice) and a PostgreSQL database.
+
+USER ROLES:
+- Admin (business owner): full access — manages packages, verifies payments, views all customers, sends notifications, views financial dashboard
+- Customer: signs up themselves, manages their own profile and subscription, views their payment history, uploads payment proof
+
+CORE FEATURES:
+
+1. Customer Signup/Login
+- Customers register themselves with phone number + password (phone number is the primary identifier since this is Pakistan and most communication is via SMS/WhatsApp)
+- OTP verification on signup via SMS to confirm the phone number is real
+- Customers can log in to: view their current package, subscription status, expiry date, payment history, and submit payment proof
+- Customers fill in their own address/zone during signup
+
+2. Admin Panel
+- View/search/filter all customers (by zone, status, package, paid/unpaid)
+- Manually add a customer too (for cases where the customer can't self-register, or for bulk-importing existing customers — see import feature below)
+- Edit or suspend any customer account
+
+3. Internet Packages
+- Admin creates/edits/deletes packages: name, speed (Mbps), price, validity (monthly/quarterly/yearly)
+- Customers browse available packages and subscribe to one themselves from their dashboard
+
+4. Subscriptions
+- Customer selects a package → status becomes "pending payment" until admin verifies payment
+- Track full subscription/renewal history per customer
+- Customers can request to renew or switch packages from their own dashboard
+
+5. Payments
+- No payment gateway — payments are direct bank transfers to the admin's account
+- Customer uploads a screenshot/proof of transfer after paying, tagged to their subscription
+- Admin reviews and marks payment as verified, which activates/extends the subscription
+- Auto-flag customers who are overdue (past due date, no verified payment)
+
+6. Bulk Customer Import (for existing 200+ customers)
+- Admin can upload a CSV/Excel file with existing customer data (name, phone, address, zone, current package, current due date) to migrate them into the system in bulk
+- Imported customers get a "claim your account" status — they aren't required to set a password immediately
+- Build a "claim account" flow: an existing/imported customer enters their phone number, receives an OTP, and sets a password to activate login access to their already-existing record (so they don't have to re-enter their data)
+
+7. Notifications
+- Automated SMS and WhatsApp messages triggered by:
+  a) Payment overdue → reminder message
+  b) Package expiring within 3 days → renewal reminder
+- Daily scheduled background job checks all customers and sends these automatically
+- Use placeholder/mock sending functions for now, structured so a real SMS/WhatsApp gateway API key can be swapped in later
+- Admin can also send manual bulk announcements (e.g. outage notices) to all customers or filtered by zone
+
+8. Complaints/Support
+- Customers can submit a complaint (e.g. "no internet", "slow speed") from their dashboard
+- Admin views and updates status (open/in progress/resolved)
+
+9. Admin Dashboard
+- Total active customers, monthly revenue, total outstanding dues
+- Package-wise customer distribution (chart)
+- Customers expiring in next 7 days
+- Overdue/defaulter customer list
+
+TECHNICAL REQUIREMENTS:
+- Phone-based authentication with OTP for both signup and account-claiming flows
+- Mobile-responsive UI (most customers will use this on phones)
+- Relational database with proper foreign keys (customers → subscriptions → payments)
+- Background job scheduler set up now even though SMS/WhatsApp use mock functions initially
+
+Start with database schema and phone/OTP authentication, then customer signup and admin bulk import, then packages and subscriptions, then payments, then the notification scheduler, then the dashboard.
