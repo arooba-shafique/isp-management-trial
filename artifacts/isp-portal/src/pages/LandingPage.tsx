@@ -1,7 +1,7 @@
 import { useLocation } from "wouter";
 import { useAuth } from "@/contexts/AuthContext";
-import { useListPublicPackages, getListPublicPackagesQueryKey } from "@workspace/api-client-react";
-import { useState } from "react";
+import { useListPublicPackages, getListPublicPackagesQueryKey, customFetch } from "@workspace/api-client-react";
+import { useState, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
 import {
   Wifi,
@@ -44,6 +44,14 @@ export default function LandingPage() {
   });
 
   const activePackages = (packages as Pkg[]).filter((p) => p.isActive);
+  const maxSpeed = Math.max(...activePackages.map(p => p.speedMbps), 0);
+
+  const [zones, setZones] = useState<string[]>([]);
+  useEffect(() => {
+    customFetch("/api/zones").then((d: any) => {
+      setZones((d as Array<{name: string}>).map(z => z.name));
+    }).catch(() => {});
+  }, []);
 
   function handleSubscribeRedirect(pkgName: string) {
     toast({
@@ -286,7 +294,7 @@ export default function LandingPage() {
               <div className="my-auto text-center space-y-2 py-8 relative">
                 <div className="inline-flex w-24 h-24 rounded-full border-4 border-slate-800 border-t-primary items-center justify-center animate-spin duration-[4s]" />
                 <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 -mt-4">
-                  <span className="block text-4xl font-black text-white tracking-tight">50</span>
+                  <span className="block text-4xl font-black text-white tracking-tight">{maxSpeed || 50}</span>
                   <span className="block text-[10px] font-bold text-primary tracking-widest uppercase -mt-1.5">
                     Mbps
                   </span>
@@ -308,7 +316,7 @@ export default function LandingPage() {
                 </div>
                 <div className="flex items-center justify-between text-xs">
                   <span className="text-slate-500">Connected Zones</span>
-                  <span className="font-mono text-slate-300 font-semibold">Sahiwal City, Phase II</span>
+                  <span className="font-mono text-slate-300 font-semibold">{zones.length ? zones.join(", ") : "Loading..."}</span>
                 </div>
               </div>
             </div>
