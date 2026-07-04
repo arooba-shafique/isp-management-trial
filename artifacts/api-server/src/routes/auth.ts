@@ -115,7 +115,7 @@ router.post("/auth/change-password", requireAuth, async (req, res): Promise<void
 
 // Forgot password - send reset token by email
 router.post("/auth/forgot-password", async (req, res): Promise<void> => {
-  const { email } = req.body;
+  const { email, frontendUrl } = req.body;
   if (!email) { res.status(400).json({ error: "Email required" }); return; }
 
   const [user] = await db.select().from(usersTable).where(eq(usersTable.email, email));
@@ -126,7 +126,7 @@ router.post("/auth/forgot-password", async (req, res): Promise<void> => {
 
   await db.update(usersTable).set({ resetToken, resetTokenExpiry }).where(eq(usersTable.id, user.id));
 
-  const sent = await sendPasswordResetEmail(email, resetToken);
+  const sent = await sendPasswordResetEmail(email, resetToken, frontendUrl);
   if (!sent) {
     res.status(500).json({ error: "Failed to send reset email. Please configure SMTP_USER and SMTP_PASS in Vercel environment variables." });
     return;

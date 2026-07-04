@@ -129,7 +129,7 @@ export default function LoginPage() {
       const res = await fetch(`${API_BASE}/api/auth/forgot-password`, {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email: forgotEmail.trim() }),
+        body: JSON.stringify({ email: forgotEmail.trim(), frontendUrl: window.location.origin }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to send reset email"); return; }

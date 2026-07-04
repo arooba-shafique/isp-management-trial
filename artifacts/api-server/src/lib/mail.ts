@@ -1,7 +1,7 @@
 import nodemailer from "nodemailer";
 import { logger } from "./logger";
 
-export async function sendPasswordResetEmail(to: string, resetToken: string): Promise<boolean> {
+export async function sendPasswordResetEmail(to: string, resetToken: string, frontendUrl?: string): Promise<boolean> {
   const host = process.env.SMTP_HOST || "smtp.gmail.com";
   const port = Number(process.env.SMTP_PORT) || 587;
   const user = process.env.SMTP_USER;
@@ -13,7 +13,7 @@ export async function sendPasswordResetEmail(to: string, resetToken: string): Pr
     return false;
   }
 
-  const baseUrl = process.env.FRONTEND_URL ?? (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
+  const baseUrl = frontendUrl || process.env.FRONTEND_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : "");
   const resetLink = `${baseUrl}/reset-password?token=${resetToken}`;
 
   try {
