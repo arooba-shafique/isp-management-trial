@@ -18,7 +18,6 @@ import AddCustomerPage from "@/pages/admin/AddCustomerPage";
 import ImportCustomersPage from "@/pages/admin/ImportCustomersPage";
 import AdminSettingsPage from "@/pages/admin/SettingsPage";
 import CustomerSettingsPage from "@/pages/customer/SettingsPage";
-import CustomerSpeedTest from "@/pages/customer/SpeedTestPage";
 import AdminPackages from "@/pages/admin/PackagesPage";
 import AdminSubscriptions from "@/pages/admin/SubscriptionsPage";
 import AdminPayments from "@/pages/admin/PaymentsPage";
@@ -78,7 +77,6 @@ function AppRouter() {
       <Route path="/packages" component={() => <CustomerRoute component={CustomerPackages} />} />
       <Route path="/payments" component={() => <CustomerRoute component={CustomerPayments} />} />
       <Route path="/complaints" component={() => <CustomerRoute component={CustomerComplaints} />} />
-      <Route path="/speed-test" component={() => <CustomerRoute component={CustomerSpeedTest} />} />
       <Route path="/settings" component={() => <CustomerRoute component={CustomerSettingsPage} />} />
 
       {/* Admin routes */}
