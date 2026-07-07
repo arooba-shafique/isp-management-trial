@@ -3,6 +3,7 @@ import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { Toaster } from "@/components/ui/toaster";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { AuthProvider, useAuth } from "@/contexts/AuthContext";
+import { useGetTrialStatus, getGetTrialStatusQueryKey } from "@workspace/api-client-react";
 import "@/lib/auth";
 
 // Pages
@@ -33,6 +34,7 @@ import { AdminLayout } from "@/components/layouts/AdminLayout";
 import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
+import TrialExpiredPage from "@/pages/TrialExpiredPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, staleTime: 30_000 } },
@@ -66,37 +68,59 @@ function RootRedirect() {
   return null;
 }
 
+function TrialRoute({ children }: { children: React.ReactNode }) {
+  const { isAuthenticated, isLoading } = useAuth();
+  const { data: trialStatus, isLoading: trialLoading } = useGetTrialStatus({ 
+    query: { 
+      queryKey: getGetTrialStatusQueryKey(),
+      enabled: isAuthenticated
+    } 
+  });
+
+  if (isLoading || trialLoading) {
+    return <div className="flex items-center justify-center h-screen"><div className="w-8 h-8 border-2 border-primary border-t-transparent rounded-full animate-spin" /></div>;
+  }
+
+  if (isAuthenticated && trialStatus?.isActive && trialStatus.isExpired) {
+    return <TrialExpiredPage />;
+  }
+
+  return <>{children}</>;
+}
+
 function AppRouter() {
   return (
-    <Switch>
-      <Route path="/" component={LandingPage} />
-      <Route path="/login" component={LoginPage} />
-      <Route path="/reset-password" component={ResetPasswordPage} />
+    <TrialRoute>
+      <Switch>
+        <Route path="/" component={LandingPage} />
+        <Route path="/login" component={LoginPage} />
+        <Route path="/reset-password" component={ResetPasswordPage} />
 
-      {/* Customer routes */}
-      <Route path="/dashboard" component={() => <CustomerRoute component={CustomerDashboard} />} />
-      <Route path="/packages" component={() => <CustomerRoute component={CustomerPackages} />} />
-      <Route path="/payments" component={() => <CustomerRoute component={CustomerPayments} />} />
-      <Route path="/complaints" component={() => <CustomerRoute component={CustomerComplaints} />} />
-      <Route path="/announcements" component={() => <CustomerRoute component={CustomerAnnouncements} />} />
-      <Route path="/settings" component={() => <CustomerRoute component={CustomerSettingsPage} />} />
+        {/* Customer routes */}
+        <Route path="/dashboard" component={() => <CustomerRoute component={CustomerDashboard} />} />
+        <Route path="/packages" component={() => <CustomerRoute component={CustomerPackages} />} />
+        <Route path="/payments" component={() => <CustomerRoute component={CustomerPayments} />} />
+        <Route path="/complaints" component={() => <CustomerRoute component={CustomerComplaints} />} />
+        <Route path="/announcements" component={() => <CustomerRoute component={CustomerAnnouncements} />} />
+        <Route path="/settings" component={() => <CustomerRoute component={CustomerSettingsPage} />} />
 
-      {/* Admin routes */}
-      <Route path="/admin/dashboard" component={() => <AdminRoute component={AdminDashboard} />} />
-      <Route path="/admin/customers/new" component={() => <AdminRoute component={AddCustomerPage} />} />
-      <Route path="/admin/customers/import" component={() => <AdminRoute component={ImportCustomersPage} />} />
-      <Route path="/admin/customers/:id" component={() => <AdminRoute component={CustomerDetailPage} />} />
-      <Route path="/admin/customers" component={() => <AdminRoute component={AdminCustomers} />} />
-      <Route path="/admin/packages" component={() => <AdminRoute component={AdminPackages} />} />
-      <Route path="/admin/subscriptions" component={() => <AdminRoute component={AdminSubscriptions} />} />
-      <Route path="/admin/payments" component={() => <AdminRoute component={AdminPayments} />} />
-      <Route path="/admin/complaints" component={() => <AdminRoute component={AdminComplaints} />} />
-      <Route path="/admin/announcements" component={() => <AdminRoute component={AdminAnnouncements} />} />
-      <Route path="/admin/settings" component={() => <AdminRoute component={AdminSettingsPage} />} />
-      <Route path="/admin/zones" component={() => <AdminRoute component={AdminZones} />} />
+        {/* Admin routes */}
+        <Route path="/admin/dashboard" component={() => <AdminRoute component={AdminDashboard} />} />
+        <Route path="/admin/customers/new" component={() => <AdminRoute component={AddCustomerPage} />} />
+        <Route path="/admin/customers/import" component={() => <AdminRoute component={ImportCustomersPage} />} />
+        <Route path="/admin/customers/:id" component={() => <AdminRoute component={CustomerDetailPage} />} />
+        <Route path="/admin/customers" component={() => <AdminRoute component={AdminCustomers} />} />
+        <Route path="/admin/packages" component={() => <AdminRoute component={AdminPackages} />} />
+        <Route path="/admin/subscriptions" component={() => <AdminRoute component={AdminSubscriptions} />} />
+        <Route path="/admin/payments" component={() => <AdminRoute component={AdminPayments} />} />
+        <Route path="/admin/complaints" component={() => <AdminRoute component={AdminComplaints} />} />
+        <Route path="/admin/announcements" component={() => <AdminRoute component={AdminAnnouncements} />} />
+        <Route path="/admin/settings" component={() => <AdminRoute component={AdminSettingsPage} />} />
+        <Route path="/admin/zones" component={() => <AdminRoute component={AdminZones} />} />
 
-      <Route component={NotFound} />
-    </Switch>
+        <Route component={NotFound} />
+      </Switch>
+    </TrialRoute>
   );
 }
 

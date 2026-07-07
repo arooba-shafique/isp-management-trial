@@ -7,3 +7,4 @@ export * from "./complaints";
 export * from "./announcements";
 export * from "./zones";
 export * from "./notifications";
+export * from "./trial_settings";

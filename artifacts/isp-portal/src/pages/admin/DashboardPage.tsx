@@ -1,6 +1,6 @@
-import { useGetDashboardStats, useGetExpiringSoon, useGetOverdueCustomers, useGetPackageDistribution, getGetDashboardStatsQueryKey, getGetExpiringSoonQueryKey, getGetOverdueCustomersQueryKey, getGetPackageDistributionQueryKey } from "@workspace/api-client-react";
+import { useGetDashboardStats, useGetExpiringSoon, useGetOverdueCustomers, useGetPackageDistribution, getGetDashboardStatsQueryKey, getGetExpiringSoonQueryKey, getGetOverdueCustomersQueryKey, getGetPackageDistributionQueryKey, useGetTrialStatus, getGetTrialStatusQueryKey } from "@workspace/api-client-react";
 import { StatusBadge } from "@/components/StatusBadge";
-import { Users, DollarSign, AlertTriangle, Clock, MessageSquare, CreditCard, TrendingUp } from "lucide-react";
+import { Users, DollarSign, AlertTriangle, Clock, MessageSquare, CreditCard, TrendingUp, Timer, AlertCircle } from "lucide-react";
 import { PieChart, Pie, Cell, Tooltip, ResponsiveContainer, BarChart, Bar, XAxis, YAxis, CartesianGrid } from "recharts";
 import { Link } from "wouter";
 
@@ -26,6 +26,7 @@ export default function AdminDashboard() {
   const { data: expiring = [] } = useGetExpiringSoon({ query: { queryKey: getGetExpiringSoonQueryKey() } });
   const { data: overdue = [] } = useGetOverdueCustomers({ query: { queryKey: getGetOverdueCustomersQueryKey() } });
   const { data: distribution = [] } = useGetPackageDistribution({ query: { queryKey: getGetPackageDistributionQueryKey() } });
+  const { data: trialStatus } = useGetTrialStatus({ query: { queryKey: getGetTrialStatusQueryKey() } });
 
   if (statsLoading) return (
     <div className="flex items-center justify-center h-64">
@@ -37,6 +38,30 @@ export default function AdminDashboard() {
 
   return (
     <div className="space-y-6">
+      {/* Trial Status Banner */}
+      {trialStatus?.isActive && (
+        <div className={`rounded-xl p-4 ${trialStatus.isExpired ? 'bg-red-50 border border-red-200' : trialStatus.daysRemaining !== null && trialStatus.daysRemaining <= 2 ? 'bg-orange-50 border border-orange-200' : 'bg-blue-50 border border-blue-200'}`}>
+          <div className="flex items-center gap-3">
+            {trialStatus.isExpired ? (
+              <AlertCircle size={20} className="text-red-600" />
+            ) : (
+              <Timer size={20} className="text-blue-600" />
+            )}
+            <div className="flex-1">
+              <h3 className={`font-semibold ${trialStatus.isExpired ? 'text-red-800' : trialStatus.daysRemaining !== null && trialStatus.daysRemaining <= 2 ? 'text-orange-800' : 'text-blue-800'}`}>
+                {trialStatus.isExpired ? 'Trial Expired' : `Trial Period - ${trialStatus.daysRemaining} day${trialStatus.daysRemaining !== 1 ? 's' : ''} remaining`}
+              </h3>
+              <p className={`text-sm ${trialStatus.isExpired ? 'text-red-600' : trialStatus.daysRemaining !== null && trialStatus.daysRemaining <= 2 ? 'text-orange-600' : 'text-blue-600'}`}>
+                {trialStatus.isExpired 
+                  ? 'Your trial has ended. Please contact support to continue using the service.'
+                  : `Trial ends on ${new Date(trialStatus.trialEnd!).toLocaleDateString()}`
+                }
+              </p>
+            </div>
+          </div>
+        </div>
+      )}
+
       <div>
         <h1 className="text-xl font-bold">Dashboard</h1>
         <p className="text-sm text-muted-foreground">NetLink ISP — Overview</p>

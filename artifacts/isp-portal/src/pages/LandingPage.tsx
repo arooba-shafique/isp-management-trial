@@ -47,7 +47,13 @@ export default function LandingPage() {
   const activePackages = (packages as Pkg[]).filter((p) => p.isActive);
 
   const [zones, setZones] = useState<string[]>([]);
-  const admins = [{ name: "Admin", phone: "03296934055" }];
+  
+  const contactInfo = {
+    phone: import.meta.env.VITE_CONTACT_PHONE || "03001234567",
+    email: import.meta.env.VITE_CONTACT_EMAIL || "support@netlink-isp.com",
+    address: import.meta.env.VITE_CONTACT_ADDRESS || "Office 123, Tech Hub, Main Boulevard, Lahore, Pakistan",
+  };
+  const admins = [{ name: "Support Team", phone: contactInfo.phone }];
   const [liveSpeed, setLiveSpeed] = useState<number | null>(null);
   const speedRan = useRef(false);
 
@@ -662,8 +668,8 @@ export default function LandingPage() {
                     <span className="text-[10px] text-slate-500 font-bold block uppercase tracking-wider">
                       Support Email
                     </span>
-                    <a href="mailto:mehtabrasoolmm@gmail.com" className="hover:text-primary transition-colors">
-                      mehtabrasoolmm@gmail.com
+                    <a href={`mailto:${contactInfo.email}`} className="hover:text-primary transition-colors">
+                      {contactInfo.email}
                     </a>
                   </div>
                 </div>
@@ -677,7 +683,7 @@ export default function LandingPage() {
                       Physical Office
                     </span>
                     <p className="text-slate-300">
-                      65/5-L Sahiwal, Punjab, Pakistan
+                      {contactInfo.address}
                     </p>
                   </div>
                 </div>

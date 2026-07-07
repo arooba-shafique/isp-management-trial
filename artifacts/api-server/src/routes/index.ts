@@ -11,6 +11,7 @@ import dashboardRouter from "./dashboard";
 import zonesRouter from "./zones";
 import notificationsRouter from "./notifications";
 import speedtestRouter from "./speedtest";
+import trialRouter from "./trial";
 
 const router: IRouter = Router();
 
@@ -26,5 +27,6 @@ router.use(dashboardRouter);
 router.use(zonesRouter);
 router.use(notificationsRouter);
 router.use(speedtestRouter);
+router.use(trialRouter);
 
 export default router;

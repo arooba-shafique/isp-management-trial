@@ -2966,7 +2966,62 @@ export function useGetPackageDistribution<TData = Awaited<ReturnType<typeof getP
 }
 
 
+// Trial Status
 
+export const getTrialStatusUrl = () => {
+  return `/api/trial/status`
+}
+
+export const getTrialStatus = async ( options?: RequestInit): Promise<{isActive: boolean; daysRemaining: number | null; trialEnd: string | null; isExpired: boolean}> => {
+
+  return customFetch<{isActive: boolean; daysRemaining: number | null; trialEnd: string | null; isExpired: boolean}>(getTrialStatusUrl(),
+  {
+    ...options,
+    method: 'GET'
+  }
+);}
+
+
+export const getGetTrialStatusQueryKey = () => {
+    return [
+    `/api/trial/status`
+    ] as const;
+    }
+
+
+export const getGetTrialStatusQueryOptions = <TData = Awaited<ReturnType<typeof getTrialStatus>>, TError = ErrorType<unknown>>( options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTrialStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+) => {
+
+const {query: queryOptions, request: requestOptions} = options ?? {};
+
+  const queryKey =  queryOptions?.queryKey ?? getGetTrialStatusQueryKey();
+
+
+
+    const queryFn: QueryFunction<Awaited<ReturnType<typeof getTrialStatus>>> = ({ signal }) => getTrialStatus({ signal, ...requestOptions });
+
+
+
+
+
+   return  { queryKey, queryFn, ...queryOptions} as UseQueryOptions<Awaited<ReturnType<typeof getTrialStatus>>, TError, TData> & { queryKey: QueryKey }
+}
+
+export type GetTrialStatusQueryResult = NonNullable<Awaited<ReturnType<typeof getTrialStatus>>>
+export type GetTrialStatusQueryError = ErrorType<unknown>
+
+
+export function useGetTrialStatus<TData = Awaited<ReturnType<typeof getTrialStatus>>, TError = ErrorType<unknown>>(
+  options?: { query?:UseQueryOptions<Awaited<ReturnType<typeof getTrialStatus>>, TError, TData>, request?: SecondParameter<typeof customFetch>}
+
+ ):  UseQueryResult<TData, TError> & { queryKey: QueryKey } {
+
+  const queryOptions = getGetTrialStatusQueryOptions(options)
+
+  const query = useQuery(queryOptions) as  UseQueryResult<TData, TError> & { queryKey: QueryKey };
+
+  return { ...query, queryKey: queryOptions.queryKey };
+}
 
 
 
