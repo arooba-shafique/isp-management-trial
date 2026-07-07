@@ -6,19 +6,27 @@ import { requireAuth, requireAdmin } from "../middlewares/auth";
 const router: IRouter = Router();
 
 router.get("/packages/public", async (req, res): Promise<void> => {
-  const packages = await db.select().from(packagesTable).where(eq(packagesTable.isActive, true)).orderBy(packagesTable.price);
-  res.json(packages.map(p => ({
-    ...p, price: Number(p.price), isActive: p.isActive, speedMbps: p.speedMbps,
-    createdAt: p.createdAt.toISOString()
-  })));
+  try {
+    const packages = await db.select().from(packagesTable).where(eq(packagesTable.isActive, true)).orderBy(packagesTable.price);
+    res.json(packages.map(p => ({
+      ...p, price: Number(p.price), isActive: p.isActive, speedMbps: p.speedMbps,
+      createdAt: p.createdAt.toISOString()
+    })));
+  } catch {
+    res.json([]);
+  }
 });
 
 router.get("/packages", requireAuth, async (req, res): Promise<void> => {
-  const packages = await db.select().from(packagesTable).orderBy(packagesTable.price);
-  res.json(packages.map(p => ({
-    ...p, price: Number(p.price), isActive: p.isActive, speedMbps: p.speedMbps,
-    createdAt: p.createdAt.toISOString()
-  })));
+  try {
+    const packages = await db.select().from(packagesTable).orderBy(packagesTable.price);
+    res.json(packages.map(p => ({
+      ...p, price: Number(p.price), isActive: p.isActive, speedMbps: p.speedMbps,
+      createdAt: p.createdAt.toISOString()
+    })));
+  } catch {
+    res.json([]);
+  }
 });
 
 router.post("/packages", requireAdmin, async (req, res): Promise<void> => {
