@@ -2,7 +2,7 @@ import { useState, useEffect } from "react";
 import { Clock, Play, Square, CheckCircle, AlertCircle, Lock, Eye, EyeOff } from "lucide-react";
 
 const API_BASE = import.meta.env.VITE_API_URL ?? "";
-const TRIAL_ADMIN_PASSWORD = "trial-admin-2024";
+const TRIAL_ADMIN_PASSWORD = "456654";
 
 export default function TrialManagementPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
