@@ -35,6 +35,7 @@ import NotFound from "@/pages/not-found";
 import LandingPage from "@/pages/LandingPage";
 import ResetPasswordPage from "@/pages/ResetPasswordPage";
 import TrialExpiredPage from "@/pages/TrialExpiredPage";
+import TrialManagementPage from "@/pages/admin/TrialManagementPage";
 
 const queryClient = new QueryClient({
   defaultOptions: { queries: { retry: false, staleTime: 30_000 } },
@@ -90,37 +91,42 @@ function TrialRoute({ children }: { children: React.ReactNode }) {
 
 function AppRouter() {
   return (
-    <TrialRoute>
-      <Switch>
-        <Route path="/" component={LandingPage} />
-        <Route path="/login" component={LoginPage} />
-        <Route path="/reset-password" component={ResetPasswordPage} />
+    <Switch>
+      {/* Hidden trial management route - no auth required, password protected inside */}
+      <Route path="/super-admin/trial-control" component={TrialManagementPage} />
+      
+      <TrialRoute>
+        <Switch>
+          <Route path="/" component={LandingPage} />
+          <Route path="/login" component={LoginPage} />
+          <Route path="/reset-password" component={ResetPasswordPage} />
 
-        {/* Customer routes */}
-        <Route path="/dashboard" component={() => <CustomerRoute component={CustomerDashboard} />} />
-        <Route path="/packages" component={() => <CustomerRoute component={CustomerPackages} />} />
-        <Route path="/payments" component={() => <CustomerRoute component={CustomerPayments} />} />
-        <Route path="/complaints" component={() => <CustomerRoute component={CustomerComplaints} />} />
-        <Route path="/announcements" component={() => <CustomerRoute component={CustomerAnnouncements} />} />
-        <Route path="/settings" component={() => <CustomerRoute component={CustomerSettingsPage} />} />
+          {/* Customer routes */}
+          <Route path="/dashboard" component={() => <CustomerRoute component={CustomerDashboard} />} />
+          <Route path="/packages" component={() => <CustomerRoute component={CustomerPackages} />} />
+          <Route path="/payments" component={() => <CustomerRoute component={CustomerPayments} />} />
+          <Route path="/complaints" component={() => <CustomerRoute component={CustomerComplaints} />} />
+          <Route path="/announcements" component={() => <CustomerRoute component={CustomerAnnouncements} />} />
+          <Route path="/settings" component={() => <CustomerRoute component={CustomerSettingsPage} />} />
 
-        {/* Admin routes */}
-        <Route path="/admin/dashboard" component={() => <AdminRoute component={AdminDashboard} />} />
-        <Route path="/admin/customers/new" component={() => <AdminRoute component={AddCustomerPage} />} />
-        <Route path="/admin/customers/import" component={() => <AdminRoute component={ImportCustomersPage} />} />
-        <Route path="/admin/customers/:id" component={() => <AdminRoute component={CustomerDetailPage} />} />
-        <Route path="/admin/customers" component={() => <AdminRoute component={AdminCustomers} />} />
-        <Route path="/admin/packages" component={() => <AdminRoute component={AdminPackages} />} />
-        <Route path="/admin/subscriptions" component={() => <AdminRoute component={AdminSubscriptions} />} />
-        <Route path="/admin/payments" component={() => <AdminRoute component={AdminPayments} />} />
-        <Route path="/admin/complaints" component={() => <AdminRoute component={AdminComplaints} />} />
-        <Route path="/admin/announcements" component={() => <AdminRoute component={AdminAnnouncements} />} />
-        <Route path="/admin/settings" component={() => <AdminRoute component={AdminSettingsPage} />} />
-        <Route path="/admin/zones" component={() => <AdminRoute component={AdminZones} />} />
+          {/* Admin routes */}
+          <Route path="/admin/dashboard" component={() => <AdminRoute component={AdminDashboard} />} />
+          <Route path="/admin/customers/new" component={() => <AdminRoute component={AddCustomerPage} />} />
+          <Route path="/admin/customers/import" component={() => <AdminRoute component={ImportCustomersPage} />} />
+          <Route path="/admin/customers/:id" component={() => <AdminRoute component={CustomerDetailPage} />} />
+          <Route path="/admin/customers" component={() => <AdminRoute component={AdminCustomers} />} />
+          <Route path="/admin/packages" component={() => <AdminRoute component={AdminPackages} />} />
+          <Route path="/admin/subscriptions" component={() => <AdminRoute component={AdminSubscriptions} />} />
+          <Route path="/admin/payments" component={() => <AdminRoute component={AdminPayments} />} />
+          <Route path="/admin/complaints" component={() => <AdminRoute component={AdminComplaints} />} />
+          <Route path="/admin/announcements" component={() => <AdminRoute component={AdminAnnouncements} />} />
+          <Route path="/admin/settings" component={() => <AdminRoute component={AdminSettingsPage} />} />
+          <Route path="/admin/zones" component={() => <AdminRoute component={AdminZones} />} />
 
-        <Route component={NotFound} />
-      </Switch>
-    </TrialRoute>
+          <Route component={NotFound} />
+        </Switch>
+      </TrialRoute>
+    </Switch>
   );
 }
 
