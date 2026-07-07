@@ -47,7 +47,7 @@ app.use(express.urlencoded({ extended: true }));
 
 // Public routes (no trial check)
 app.use("/api", (req, res, next) => {
-  const publicPaths = ["/health", "/auth/", "/public/", "/trial/status"];
+  const publicPaths = ["/health", "/auth/", "/public/", "/trial/status", "/trial/settings"];
   if (publicPaths.some(p => req.path.startsWith(p))) {
     next();
   } else {
