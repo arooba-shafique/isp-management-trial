@@ -37,11 +37,10 @@ router.put("/trial/settings", requireAdmin, async (req, res): Promise<void> => {
       const updateData: any = { isActive };
       if (trialDays !== undefined) updateData.trialDays = trialDays;
       
-      if (isActive && !existing.trialStart) {
+      if (isActive) {
+        // Always start fresh from now
         updateData.trialStart = new Date();
-        updateData.trialEnd = new Date(Date.now() + (trialDays || 7) * 24 * 60 * 60 * 1000);
-      } else if (isActive && existing.trialEnd) {
-        updateData.trialEnd = new Date(existing.trialEnd.getTime() + (trialDays || 7) * 24 * 60 * 60 * 1000);
+        updateData.trialEnd = new Date(Date.now() + (trialDays || existing.trialDays || 7) * 24 * 60 * 60 * 1000);
       }
       
       const [updated] = await db.update(trialSettingsTable)
