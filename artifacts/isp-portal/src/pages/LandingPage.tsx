@@ -37,6 +37,7 @@ export default function LandingPage() {
   const { isAuthenticated, user } = useAuth();
   const { toast } = useToast();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  const [showAllPackages, setShowAllPackages] = useState(false);
 
   // Fetch live packages from the public endpoint
   const { data: packages = [], isLoading: packagesLoading } = useListPublicPackages({
@@ -484,7 +485,7 @@ export default function LandingPage() {
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
-            {activePackages.map((pkg) => {
+            {(showAllPackages ? activePackages : activePackages.slice(0, 3)).map((pkg) => {
               const speedInfo = getSpeedCategory(pkg.speedMbps);
               const isPopular = pkg.speedMbps === 20 || pkg.name.toLowerCase().includes("pro");
               
@@ -579,6 +580,16 @@ export default function LandingPage() {
               );
             })}
           </div>
+          {activePackages.length > 3 && !showAllPackages && (
+            <div className="text-center mt-8">
+              <button
+                onClick={() => setShowAllPackages(true)}
+                className="px-6 py-2.5 rounded-xl text-sm font-semibold border border-slate-700 text-slate-300 hover:bg-slate-800 hover:text-white transition-all duration-200"
+              >
+                Show More Packages ({activePackages.length - 3} more)
+              </button>
+            </div>
+          )}
         )}
       </section>
 
