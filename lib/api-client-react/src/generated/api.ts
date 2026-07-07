@@ -2972,9 +2972,9 @@ export const getTrialStatusUrl = () => {
   return `/api/trial/status`
 }
 
-export const getTrialStatus = async ( options?: RequestInit): Promise<{isActive: boolean; daysRemaining: number | null; trialEnd: string | null; isExpired: boolean}> => {
+export const getTrialStatus = async ( options?: RequestInit): Promise<{isActive: boolean; isStopped: boolean; daysRemaining: number | null; trialEnd: string | null; isExpired: boolean}> => {
 
-  return customFetch<{isActive: boolean; daysRemaining: number | null; trialEnd: string | null; isExpired: boolean}>(getTrialStatusUrl(),
+  return customFetch<{isActive: boolean; isStopped: boolean; daysRemaining: number | null; trialEnd: string | null; isExpired: boolean}>(getTrialStatusUrl(),
   {
     ...options,
     method: 'GET'

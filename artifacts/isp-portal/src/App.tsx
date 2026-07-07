@@ -86,6 +86,10 @@ function TrialRoute({ children }: { children: React.ReactNode }) {
     return <TrialExpiredPage />;
   }
 
+  if (isAuthenticated && trialStatus?.isStopped) {
+    return <TrialExpiredPage isStopped />;
+  }
+
   return <>{children}</>;
 }
 
