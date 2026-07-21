@@ -9,6 +9,7 @@ export const paymentsTable = pgTable("payments", {
   id: serial("id").primaryKey(),
   subscriptionId: integer("subscription_id").notNull().references(() => subscriptionsTable.id),
   customerId: integer("customer_id").notNull().references(() => usersTable.id),
+  adminId: integer("admin_id").references(() => usersTable.id),
   amount: numeric("amount", { precision: 10, scale: 2 }).notNull(),
   proofImageUrl: text("proof_image_url"),
   status: text("status").notNull().default("pending"),

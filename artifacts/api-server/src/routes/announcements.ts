@@ -7,7 +7,13 @@ import { sendSms, sendWhatsApp } from "../lib/notifications";
 const router: IRouter = Router();
 
 router.get("/announcements", requireAuth, async (req, res): Promise<void> => {
-  const announcements = await db.select().from(announcementsTable).orderBy(announcementsTable.createdAt);
+  const isAdmin = req.user!.role === "admin";
+  let announcements;
+  if (isAdmin) {
+    announcements = await db.select().from(announcementsTable).where(eq(announcementsTable.adminId, req.user!.userId)).orderBy(announcementsTable.createdAt);
+  } else {
+    announcements = await db.select().from(announcementsTable).orderBy(announcementsTable.createdAt);
+  }
   res.json(announcements.map(a => ({ ...a, createdAt: a.createdAt.toISOString() })));
 });
 
@@ -21,7 +27,7 @@ router.post("/announcements", requireAdmin, async (req, res): Promise<void> => {
   const recipientCount = customers.length;
 
   const [announcement] = await db.insert(announcementsTable).values({
-    title, message, targetZone: targetZone ?? null, recipientCount
+    adminId: req.user!.userId, title, message, targetZone: targetZone ?? null, recipientCount
   }).returning();
 
   // Create notifications for each customer so bell icon shows badge

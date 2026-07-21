@@ -7,6 +7,7 @@ import { usersTable } from "./users";
 export const complaintsTable = pgTable("complaints", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").notNull().references(() => usersTable.id),
+  adminId: integer("admin_id").references(() => usersTable.id),
   subject: text("subject").notNull(),
   description: text("description").notNull(),
   status: text("status").notNull().default("open"),

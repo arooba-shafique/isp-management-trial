@@ -70,7 +70,7 @@ router.post("/customers/import", requireAdmin, async (req, res): Promise<void> =
         const [pkg] = await db.select().from(packagesTable).where(ilike(packagesTable.name, row.packageName));
         if (pkg) {
           await db.insert(subscriptionsTable).values({
-            customerId: newUser.id, packageId: pkg.id, status: "active",
+            customerId: newUser.id, packageId: pkg.id, adminId: req.user!.userId, status: "active",
             startDate: new Date().toISOString().split("T")[0], endDate: row.dueDate
           });
         }
@@ -127,7 +127,7 @@ router.post("/customers", requireAdmin, async (req, res): Promise<void> => {
   if (packageId) {
     const endDate = dueDate || new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split("T")[0];
     await db.insert(subscriptionsTable).values({
-      customerId: user.id, packageId: Number(packageId), status: "active",
+      customerId: user.id, packageId: Number(packageId), adminId: req.user!.userId, status: "active",
       startDate: new Date().toISOString().split("T")[0], endDate
     });
   }

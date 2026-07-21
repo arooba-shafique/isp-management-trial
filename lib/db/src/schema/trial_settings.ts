@@ -4,10 +4,7 @@ import { z } from "zod/v4";
 
 export const trialSettingsTable = pgTable("trial_settings", {
   id: serial("id").primaryKey(),
-  isActive: boolean("is_active").notNull().default(false),
-  trialDays: integer("trial_days").notNull().default(7),
-  trialStart: timestamp("trial_start", { withTimezone: true }),
-  trialEnd: timestamp("trial_end", { withTimezone: true }),
+  masterPassword: text("master_password").notNull().default("456654"),
   createdAt: timestamp("created_at", { withTimezone: true }).notNull().defaultNow(),
   updatedAt: timestamp("updated_at", { withTimezone: true }).notNull().defaultNow().$onUpdate(() => new Date()),
 });

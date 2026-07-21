@@ -49,7 +49,7 @@ router.post("/payments", requireAuth, async (req, res): Promise<void> => {
   if (req.user!.role !== "admin" && sub.customerId !== customerId) { res.status(403).json({ error: "Forbidden" }); return; }
 
   const [payment] = await db.insert(paymentsTable).values({
-    subscriptionId: Number(subscriptionId), customerId, amount: String(amount),
+    subscriptionId: Number(subscriptionId), customerId, adminId: null, amount: String(amount),
     proofImageUrl: proofImageUrl ?? null, status: "pending", adminNote: note ?? null
   }).returning();
 

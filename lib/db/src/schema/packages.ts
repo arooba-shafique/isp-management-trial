@@ -1,9 +1,11 @@
 import { pgTable, text, serial, timestamp, integer, boolean, numeric } from "drizzle-orm/pg-core";
 import { createInsertSchema } from "drizzle-zod";
 import { z } from "zod/v4";
+import { usersTable } from "./users";
 
 export const packagesTable = pgTable("packages", {
   id: serial("id").primaryKey(),
+  adminId: integer("admin_id").references(() => usersTable.id),
   name: text("name").notNull(),
   speedMbps: integer("speed_mbps").notNull(),
   price: numeric("price", { precision: 10, scale: 2 }).notNull(),

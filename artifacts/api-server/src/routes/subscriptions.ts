@@ -59,7 +59,7 @@ router.post("/subscriptions", requireAuth, async (req, res): Promise<void> => {
   if (!pkg) { res.status(404).json({ error: "Package not found" }); return; }
 
   const [sub] = await db.insert(subscriptionsTable).values({
-    customerId, packageId: Number(packageId), status: "pending-payment"
+    customerId, packageId: Number(packageId), adminId: null, status: "pending-payment"
   }).returning();
 
   res.status(201).json(formatSub({ ...sub, package: { ...pkg, price: pkg.price } }));
@@ -100,7 +100,7 @@ router.post("/subscriptions/:id/renew", requireAuth, async (req, res): Promise<v
   if (req.user!.role !== "admin" && existing.customerId !== req.user!.userId) { res.status(403).json({ error: "Forbidden" }); return; }
 
   const [newSub] = await db.insert(subscriptionsTable).values({
-    customerId: existing.customerId, packageId: existing.packageId, status: "pending-payment"
+    customerId: existing.customerId, packageId: existing.packageId, adminId: existing.adminId, status: "pending-payment"
   }).returning();
   const [pkg] = await db.select().from(packagesTable).where(eq(packagesTable.id, newSub.packageId));
   res.status(201).json(formatSub({ ...newSub, package: pkg ?? null }));
@@ -118,11 +118,11 @@ router.post("/subscriptions/:id/switch", requireAuth, async (req, res): Promise<
 
   await db.update(subscriptionsTable).set({ status: "expired" }).where(eq(subscriptionsTable.id, id));
 
-  const [newSub] = await db.insert(subscriptionsTable).values({
-    customerId: existing.customerId, packageId: Number(newPackageId), status: "pending-payment"
+  const [newSub2] = await db.insert(subscriptionsTable).values({
+    customerId: existing.customerId, packageId: Number(newPackageId), adminId: existing.adminId, status: "pending-payment"
   }).returning();
-  const [pkg] = await db.select().from(packagesTable).where(eq(packagesTable.id, newSub.packageId));
-  res.status(201).json(formatSub({ ...newSub, package: pkg ?? null }));
+  const [pkg2] = await db.select().from(packagesTable).where(eq(packagesTable.id, newSub2.packageId));
+  res.status(201).json(formatSub({ ...newSub2, package: pkg2 ?? null }));
 });
 
 export default router;

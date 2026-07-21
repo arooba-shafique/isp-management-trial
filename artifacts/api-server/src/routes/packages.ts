@@ -19,7 +19,13 @@ router.get("/packages/public", async (req, res): Promise<void> => {
 
 router.get("/packages", requireAuth, async (req, res): Promise<void> => {
   try {
-    const packages = await db.select().from(packagesTable).orderBy(packagesTable.price);
+    const isAdmin = req.user!.role === "admin";
+    let packages;
+    if (isAdmin) {
+      packages = await db.select().from(packagesTable).where(eq(packagesTable.adminId, req.user!.userId)).orderBy(packagesTable.price);
+    } else {
+      packages = await db.select().from(packagesTable).where(eq(packagesTable.isActive, true)).orderBy(packagesTable.price);
+    }
     res.json(packages.map(p => ({
       ...p, price: Number(p.price), isActive: p.isActive, speedMbps: p.speedMbps,
       createdAt: p.createdAt.toISOString()
@@ -35,7 +41,7 @@ router.post("/packages", requireAdmin, async (req, res): Promise<void> => {
     res.status(400).json({ error: "name, speedMbps, price, validity required" }); return;
   }
   const [pkg] = await db.insert(packagesTable).values({
-    name, speedMbps: Number(speedMbps), price: String(price), validity, description, isActive: isActive ?? true
+    adminId: req.user!.userId, name, speedMbps: Number(speedMbps), price: String(price), validity, description, isActive: isActive ?? true
   }).returning();
   res.status(201).json({ ...pkg, price: Number(pkg.price), createdAt: pkg.createdAt.toISOString() });
 });

@@ -14,10 +14,13 @@ router.get("/complaints", requireAuth, async (req, res): Promise<void> => {
   const { status, customerId } = req.query as Record<string, string>;
   const isAdmin = req.user!.role === "admin";
 
-  let complaints = await db.select().from(complaintsTable).orderBy(complaintsTable.createdAt);
-
-  if (!isAdmin) complaints = complaints.filter(c => c.customerId === req.user!.userId);
-  else if (customerId) complaints = complaints.filter(c => c.customerId === parseInt(customerId, 10));
+  let complaints;
+  if (!isAdmin) {
+    complaints = await db.select().from(complaintsTable).where(eq(complaintsTable.customerId, req.user!.userId)).orderBy(complaintsTable.createdAt);
+  } else {
+    complaints = await db.select().from(complaintsTable).where(eq(complaintsTable.adminId, req.user!.userId)).orderBy(complaintsTable.createdAt);
+    if (customerId) complaints = complaints.filter(c => c.customerId === parseInt(customerId, 10));
+  }
   if (status) complaints = complaints.filter(c => c.status === status);
 
   const result = await Promise.all(complaints.map(async c => {
@@ -31,7 +34,7 @@ router.post("/complaints", requireAuth, async (req, res): Promise<void> => {
   const { subject, description } = req.body;
   if (!subject || !description) { res.status(400).json({ error: "subject and description required" }); return; }
   const [complaint] = await db.insert(complaintsTable).values({
-    customerId: req.user!.userId, subject, description, status: "open"
+    customerId: req.user!.userId, adminId: null, subject, description, status: "open"
   }).returning();
 
   const [complainant] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, req.user!.userId));

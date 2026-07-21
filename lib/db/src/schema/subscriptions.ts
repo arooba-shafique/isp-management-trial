@@ -9,6 +9,7 @@ export const subscriptionsTable = pgTable("subscriptions", {
   id: serial("id").primaryKey(),
   customerId: integer("customer_id").notNull().references(() => usersTable.id),
   packageId: integer("package_id").notNull().references(() => packagesTable.id),
+  adminId: integer("admin_id").references(() => usersTable.id),
   status: text("status").notNull().default("pending-payment"),
   startDate: date("start_date", { mode: "string" }),
   endDate: date("end_date", { mode: "string" }),
