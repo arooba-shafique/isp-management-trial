@@ -46,21 +46,8 @@ router.post("/trial/verify-master", async (req, res): Promise<void> => {
 });
 
 // Super-admin: list all admin accounts with their trial status
-router.get("/trial/admins", async (req, res): Promise<void> => {
+router.get("/trial/admins", async (_req, res): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      res.status(401).json({ error: "Unauthorized" });
-      return;
-    }
-
-    const { verifyToken } = await import("../lib/auth");
-    const payload = verifyToken(authHeader.slice(7));
-    if (!payload) {
-      res.status(401).json({ error: "Invalid token" });
-      return;
-    }
-
     const admins = await db.select({
       id: usersTable.id,
       name: usersTable.name,
@@ -89,20 +76,12 @@ router.get("/trial/admins", async (req, res): Promise<void> => {
 // Super-admin: update trial for a specific admin
 router.put("/trial/settings", async (req, res): Promise<void> => {
   try {
-    const authHeader = req.headers.authorization;
-    if (!authHeader?.startsWith("Bearer ")) {
-      res.status(401).json({ error: "Unauthorized" });
+    const { isActive, trialDays, adminId, masterPassword } = req.body;
+
+    if (masterPassword !== TRIAL_MASTER_PASSWORD) {
+      res.status(403).json({ error: "Invalid master password" });
       return;
     }
-
-    const { verifyToken } = await import("../lib/auth");
-    const payload = verifyToken(authHeader.slice(7));
-    if (!payload) {
-      res.status(401).json({ error: "Invalid token" });
-      return;
-    }
-
-    const { isActive, trialDays, adminId } = req.body;
 
     if (!adminId) {
       res.status(400).json({ error: "adminId is required" });

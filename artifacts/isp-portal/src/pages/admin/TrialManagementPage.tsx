@@ -29,13 +29,10 @@ export default function TrialManagementPage() {
 
   const [extendDays, setExtendDays] = useState(7);
   const [selectedAdmin, setSelectedAdmin] = useState<number | null>(null);
+  const [masterPassword, setMasterPassword] = useState("");
 
   useEffect(() => {
-    const saved = sessionStorage.getItem("trial_master_auth");
-    if (saved === "verified") {
-      setIsAuthenticated(true);
-      fetchAdmins();
-    }
+    sessionStorage.removeItem("trial_master_auth");
   }, []);
 
   async function handlePasswordSubmit(e: React.FormEvent) {
@@ -50,6 +47,7 @@ export default function TrialManagementPage() {
       const data = await res.json();
       if (data.valid) {
         setIsAuthenticated(true);
+        setMasterPassword(password);
         sessionStorage.setItem("trial_master_auth", "verified");
         fetchAdmins();
       } else {
@@ -63,12 +61,17 @@ export default function TrialManagementPage() {
   async function fetchAdmins() {
     setLoading(true);
     try {
-      const token = localStorage.getItem("isp_token");
-      const res = await fetch(`${API_BASE}/api/trial/admins`, {
-        headers: { Authorization: `Bearer ${token}` },
-      });
+      const res = await fetch(`${API_BASE}/api/trial/admins`);
+      if (!res.ok) {
+        setError("Failed to load admin accounts");
+        return;
+      }
       const data = await res.json();
-      setAdmins(data);
+      if (Array.isArray(data)) {
+        setAdmins(data);
+      } else {
+        setError("Unexpected response from server");
+      }
     } catch {
       setError("Failed to load admin accounts");
     } finally {
@@ -81,11 +84,10 @@ export default function TrialManagementPage() {
     setMessage("");
     setError("");
     try {
-      const token = localStorage.getItem("isp_token");
       const res = await fetch(`${API_BASE}/api/trial/settings`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ isActive: true, trialDays: extendDays, adminId }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: true, trialDays: extendDays, adminId, masterPassword }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to start trial"); return; }
@@ -103,11 +105,10 @@ export default function TrialManagementPage() {
     setMessage("");
     setError("");
     try {
-      const token = localStorage.getItem("isp_token");
       const res = await fetch(`${API_BASE}/api/trial/settings`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ isActive: false, adminId }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: false, adminId, masterPassword }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to stop trial"); return; }
@@ -125,14 +126,13 @@ export default function TrialManagementPage() {
     setMessage("");
     setError("");
     try {
-      const token = localStorage.getItem("isp_token");
       const admin = admins.find(a => a.id === adminId);
       const currentDays = admin?.daysRemaining ?? 0;
       const newDays = currentDays + extendDays;
       const res = await fetch(`${API_BASE}/api/trial/settings`, {
         method: "PUT",
-        headers: { "Content-Type": "application/json", Authorization: `Bearer ${token}` },
-        body: JSON.stringify({ isActive: true, trialDays: newDays, adminId }),
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ isActive: true, trialDays: newDays, adminId, masterPassword }),
       });
       const data = await res.json();
       if (!res.ok) { setError(data.error ?? "Failed to extend trial"); return; }
