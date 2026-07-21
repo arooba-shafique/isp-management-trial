@@ -10,7 +10,7 @@ const router: IRouter = Router();
 router.get("/customers", requireAdmin, async (req, res): Promise<void> => {
   const { zone, status, search } = req.query as Record<string, string>;
 
-  let customers = await db.select().from(usersTable).where(eq(usersTable.role, "customer"));
+  let customers = await db.select().from(usersTable).where(and(eq(usersTable.role, "customer"), eq(usersTable.adminId, req.user!.userId)));
 
   if (zone) customers = customers.filter(c => c.zone === zone);
   if (status) customers = customers.filter(c => c.status === status);
@@ -64,6 +64,7 @@ router.post("/customers/import", requireAdmin, async (req, res): Promise<void> =
       const [newUser] = await db.insert(usersTable).values({
         phone: row.phone, name: row.name, address: row.address ?? null,
         zone: row.zone ?? null, role: "customer", status: "active", passwordHash: defaultPasswordHash,
+        adminId: req.user!.userId,
       }).returning();
 
       if (row.packageName && row.dueDate) {
@@ -88,7 +89,7 @@ router.post("/customers/import", requireAdmin, async (req, res): Promise<void> =
 router.get("/customers/:id", requireAdmin, async (req, res): Promise<void> => {
   const raw = Array.isArray(req.params.id) ? req.params.id[0] : req.params.id;
   const id = parseInt(raw, 10);
-  const [c] = await db.select().from(usersTable).where(and(eq(usersTable.id, id), eq(usersTable.role, "customer")));
+  const [c] = await db.select().from(usersTable).where(and(eq(usersTable.id, id), eq(usersTable.role, "customer"), eq(usersTable.adminId, req.user!.userId)));
   if (!c) { res.status(404).json({ error: "Customer not found" }); return; }
 
   const [activeSub] = await db.select().from(subscriptionsTable).where(and(eq(subscriptionsTable.customerId, id), eq(subscriptionsTable.status, "active"))).limit(1);
@@ -121,7 +122,8 @@ router.post("/customers", requireAdmin, async (req, res): Promise<void> => {
   const defaultPasswordHash = "$2b$10$T2kkuIX408ikxqMYCkHRwuAPc6t9QzJiQ5NO8ZB9Ntl4XpdAnT2iC";
 
   const [user] = await db.insert(usersTable).values({
-    phone, name, address, zone, role: "customer", status: customerStatus, passwordHash: defaultPasswordHash
+    phone, name, address, zone, role: "customer", status: customerStatus, passwordHash: defaultPasswordHash,
+    adminId: req.user!.userId,
   }).returning();
 
   if (packageId) {
@@ -158,7 +160,7 @@ router.patch("/customers/:id", requireAdmin, async (req, res): Promise<void> => 
   if (zone !== undefined) updates.zone = zone;
   if (phone !== undefined) updates.phone = phone;
 
-  const [updated] = await db.update(usersTable).set(updates).where(eq(usersTable.id, id)).returning();
+  const [updated] = await db.update(usersTable).set(updates).where(and(eq(usersTable.id, id), eq(usersTable.adminId, req.user!.userId))).returning();
   if (!updated) { res.status(404).json({ error: "Customer not found" }); return; }
   res.json({ id: updated.id, phone: updated.phone, name: updated.name, role: updated.role, status: updated.status, address: updated.address, zone: updated.zone, createdAt: updated.createdAt.toISOString() });
 });
@@ -170,7 +172,7 @@ router.delete("/customers/:id", requireAdmin, async (req, res): Promise<void> =>
   await db.delete(complaintsTable).where(eq(complaintsTable.customerId, id));
   await db.delete(paymentsTable).where(eq(paymentsTable.customerId, id));
   await db.delete(subscriptionsTable).where(eq(subscriptionsTable.customerId, id));
-  const [deleted] = await db.delete(usersTable).where(eq(usersTable.id, id)).returning();
+  const [deleted] = await db.delete(usersTable).where(and(eq(usersTable.id, id), eq(usersTable.adminId, req.user!.userId))).returning();
   if (!deleted) { res.status(404).json({ error: "Customer not found" }); return; }
   res.json({ message: "Customer deleted", id: deleted.id, phone: deleted.phone });
 });
@@ -180,7 +182,7 @@ router.post("/customers/:id/suspend", requireAdmin, async (req, res): Promise<vo
   const id = parseInt(raw, 10);
   const { suspended } = req.body;
   const newStatus = suspended ? "suspended" : "active";
-  const [updated] = await db.update(usersTable).set({ status: newStatus }).where(eq(usersTable.id, id)).returning();
+  const [updated] = await db.update(usersTable).set({ status: newStatus }).where(and(eq(usersTable.id, id), eq(usersTable.adminId, req.user!.userId))).returning();
   if (!updated) { res.status(404).json({ error: "Customer not found" }); return; }
   res.json({ id: updated.id, phone: updated.phone, name: updated.name, role: updated.role, status: updated.status, address: updated.address, zone: updated.zone, createdAt: updated.createdAt.toISOString() });
 });
@@ -190,7 +192,7 @@ router.post("/customers/:id/reset-password", requireAdmin, async (req, res): Pro
   const id = parseInt(raw, 10);
   const { newPassword } = req.body;
   if (!newPassword || newPassword.length < 6) { res.status(400).json({ error: "Password must be at least 6 characters" }); return; }
-  const [user] = await db.select().from(usersTable).where(eq(usersTable.id, id));
+  const [user] = await db.select().from(usersTable).where(and(eq(usersTable.id, id), eq(usersTable.adminId, req.user!.userId)));
   if (!user) { res.status(404).json({ error: "Customer not found" }); return; }
   const passwordHash = await hashPassword(newPassword);
   await db.update(usersTable).set({ passwordHash }).where(eq(usersTable.id, id));

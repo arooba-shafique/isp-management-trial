@@ -12,6 +12,7 @@ export const usersTable = pgTable("users", {
   status: text("status").notNull().default("active"),
   address: text("address"),
   zone: text("zone"),
+  adminId: integer("admin_id").references((): any => usersTable.id),
   trialActive: boolean("trial_active").notNull().default(false),
   trialDays: integer("trial_days").notNull().default(7),
   trialStart: timestamp("trial_start", { withTimezone: true }),

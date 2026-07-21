@@ -22,6 +22,7 @@ router.get("/payments", requireAuth, async (req, res): Promise<void> => {
   let payments = await db.select().from(paymentsTable).orderBy(paymentsTable.createdAt);
 
   if (targetCustomerId) payments = payments.filter(p => p.customerId === targetCustomerId);
+  if (isAdmin && !targetCustomerId) payments = payments.filter(p => p.adminId === req.user!.userId);
   if (status) payments = payments.filter(p => p.status === status);
   if (subscriptionId) payments = payments.filter(p => p.subscriptionId === parseInt(subscriptionId, 10));
 
@@ -69,7 +70,7 @@ router.post("/payments/:id/verify", requireAdmin, async (req, res): Promise<void
   const updates: Record<string, unknown> = { status: newStatus, adminNote: adminNote ?? null };
   if (action === "verify") updates.verifiedAt = new Date();
 
-  const [payment] = await db.update(paymentsTable).set(updates).where(eq(paymentsTable.id, id)).returning();
+  const [payment] = await db.update(paymentsTable).set(updates).where(and(eq(paymentsTable.id, id), eq(paymentsTable.adminId, req.user!.userId))).returning();
   if (!payment) { res.status(404).json({ error: "Payment not found" }); return; }
 
   const [payer] = await db.select({ name: usersTable.name }).from(usersTable).where(eq(usersTable.id, payment.customerId));

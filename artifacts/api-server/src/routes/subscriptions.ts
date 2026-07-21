@@ -34,6 +34,7 @@ router.get("/subscriptions", requireAuth, async (req, res): Promise<void> => {
   const conditions = [];
   if (targetCustomerId) conditions.push(eq(subscriptionsTable.customerId, targetCustomerId));
   if (status) conditions.push(eq(subscriptionsTable.status, status));
+  if (isAdmin && !targetCustomerId) conditions.push(eq(subscriptionsTable.adminId, req.user!.userId));
   if (conditions.length) query = query.where(and(...conditions));
 
   const subs = await query.orderBy(subscriptionsTable.createdAt);
