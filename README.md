@@ -25,7 +25,7 @@ A full-stack web application for managing Internet Service Provider operations, 
 
 ### Other Features
 - Role-based access control (admin, customer)
-- OTP-based password reset
+- Password reset via email
 - Authentication with secure sessions
 
 ## Tech Stack
